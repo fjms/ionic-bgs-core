@@ -1,5 +1,10 @@
 package com.red_folder.phonegap.plugin.backgroundservice;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.support.v4.app.NotificationCompat;
+import android.content.Context;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -127,11 +132,18 @@ public abstract class BackgroundService extends Service {
 		Log.d(TAG, "onStartCommand run");
 		if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			Log.d(TAG, "Android 8 Call startForeground");
+			Log.d(TAG, "Create Notification");
+			String CHANNEL_ID = "Clece Beacon Reader";
+			String CHANNEL_NAME = "Scanning Beacons madafaka";
+			NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
+					NotificationManager.IMPORTANCE_NONE);
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
 
-			// TODO CREATE NOTIFICATION
+			int priority = -2;
+			Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+					.setCategory(Notification.CATEGORY_SERVICE).setPriority(priority).build();
 
-			// startForeground(101, buildForegroundNotification("Scanning madafaka"));
-			
+			startForeground(101, notification);
 		}
 		initialiseService();
 		return START_STICKY;
