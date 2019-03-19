@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
@@ -37,7 +38,7 @@ public abstract class BackgroundService extends Service {
 	private Boolean mServiceInitialised = false;
 	private Timer mTimer;
 
-  public static String test;
+	public static String test;
 
 	private final Object mResultLock = new Object();
 	private JSONObject mLatestResult = null;
@@ -65,23 +66,23 @@ public abstract class BackgroundService extends Service {
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
 		SharedPreferences.Editor editor = sharedPrefs.edit();
-        editor.putBoolean(this.getClass().getName() + ".Enabled", enabled);
-        editor.commit(); // Very important
+		editor.putBoolean(this.getClass().getName() + ".Enabled", enabled);
+		editor.commit(); // Very important
 	}
 
 	public int getMilliseconds() {
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
 		// Should default to a minute
-		return sharedPrefs.getInt(this.getClass().getName() + ".Milliseconds", 60000 );
+		return sharedPrefs.getInt(this.getClass().getName() + ".Milliseconds", 60000);
 	}
 
 	public void setMilliseconds(int milliseconds) {
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
 		SharedPreferences.Editor editor = sharedPrefs.edit();
-        editor.putInt(this.getClass().getName() + ".Milliseconds", milliseconds);
-        editor.commit(); // Very important
+		editor.putInt(this.getClass().getName() + ".Milliseconds", milliseconds);
+		editor.commit(); // Very important
 	}
 
 	protected JSONObject getLatestResult() {
@@ -98,14 +99,14 @@ public abstract class BackgroundService extends Service {
 
 	public void restartTimer() {
 
-        // Stop the timertask and restart for the new interval to take effect
-        if (this.mUpdateTask != null) {
-        	this.mUpdateTask.cancel();
-        	this.mUpdateTask = null;
+		// Stop the timertask and restart for the new interval to take effect
+		if (this.mUpdateTask != null) {
+			this.mUpdateTask.cancel();
+			this.mUpdateTask = null;
 
 			this.mUpdateTask = getTimerTask();
 			this.mTimer.schedule(this.mUpdateTask, getMilliseconds(), getMilliseconds());
-        }
+		}
 	}
 
 	/*
@@ -122,11 +123,18 @@ public abstract class BackgroundService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-	    super.onStartCommand(intent, flags, startId);
-	    Log.d(TAG, "onStartCommand run");
+		super.onStartCommand(intent, flags, startId);
+		Log.d(TAG, "onStartCommand run");
+		if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			Log.d(TAG, "Android 8 Call startForeground");
 
-	    initialiseService();
-	    return START_STICKY;
+			// TODO CREATE NOTIFICATION
+
+			// startForeground(101, buildForegroundNotification("Scanning madafaka"));
+			
+		}
+		initialiseService();
+		return START_STICKY;
 	}
 
 	@Override
@@ -171,8 +179,7 @@ public abstract class BackgroundService extends Service {
 		}
 
 		@Override
-		public void addListener(BackgroundServiceListener listener)
-				throws RemoteException {
+		public void addListener(BackgroundServiceListener listener) throws RemoteException {
 
 			synchronized (mListeners) {
 				if (mListeners.add(listener))
@@ -183,14 +190,12 @@ public abstract class BackgroundService extends Service {
 		}
 
 		@Override
-		public void removeListener(BackgroundServiceListener listener)
-				throws RemoteException {
+		public void removeListener(BackgroundServiceListener listener) throws RemoteException {
 
 			synchronized (mListeners) {
 				if (mListeners.size() > 0) {
 					boolean removed = false;
-					for (int i = 0; i < mListeners.size() && !removed; i++)
-					{
+					for (int i = 0; i < mListeners.size() && !removed; i++) {
 						if (listener.getUniqueID().equals(mListeners.get(i).getUniqueID())) {
 							mListeners.remove(i);
 							removed = true;
@@ -244,9 +249,10 @@ public abstract class BackgroundService extends Service {
 		@Override
 		public void setConfiguration(String configuration) throws RemoteException {
 			try {
-        JSONObject array = null;
-        if (test != null) array = new JSONObject(test);
-				 if (configuration.length() > 0) {
+				JSONObject array = null;
+				if (test != null)
+					array = new JSONObject(test);
+				if (configuration.length() > 0) {
 					array = new JSONObject(configuration);
 				} else {
 					array = new JSONObject();
@@ -307,7 +313,7 @@ public abstract class BackgroundService extends Service {
 
 	}
 
-	private void setupTimerTask () {
+	private void setupTimerTask() {
 		// Only create a timer if the timer is null
 		if (this.mTimer == null) {
 			this.mTimer = new Timer(this.getClass().getName());
@@ -326,11 +332,9 @@ public abstract class BackgroundService extends Service {
 	private void stopTimerTask() {
 
 		Log.i(TAG, "stopTimerTask called");
-		if (this.mUpdateTask != null)
-		{
+		if (this.mUpdateTask != null) {
 			Log.i(TAG, "updateTask is not null");
-			if (this.mUpdateTask.cancel() )
-			{
+			if (this.mUpdateTask.cancel()) {
 				Log.i(TAG, "updateTask.cancel returned true");
 			} else {
 				Log.i(TAG, "updateTask.cancel returned false");
@@ -356,10 +360,10 @@ public abstract class BackgroundService extends Service {
 					Log.d(TAG, "Current is " + (new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")).format(current));
 					if (mPausedUntil.after(current)) {
 						Log.d(TAG, "Service should be paused");
-						paused = true;					// Still paused
+						paused = true; // Still paused
 					} else {
 						Log.d(TAG, "Service should not be paused");
-						mPausedUntil = null;				// Paused time has past so we can clear the pause
+						mPausedUntil = null; // Paused time has past so we can clear the pause
 						onPauseComplete();
 					}
 				}
@@ -380,7 +384,8 @@ public abstract class BackgroundService extends Service {
 
 	}
 
-	// Seperated out to allow the doWork to be called from timer and adhoc (via run method)
+	// Seperated out to allow the doWork to be called from timer and adhoc (via run
+	// method)
 	private void doWorkWrapper() {
 		JSONObject tmp = null;
 
@@ -395,8 +400,7 @@ public abstract class BackgroundService extends Service {
 
 		// Now call the listeners
 		Log.i(TAG, "Sending to all listeners");
-		for (int i = 0; i < mListeners.size(); i++)
-		{
+		for (int i = 0; i < mListeners.size(); i++) {
 			try {
 				mListeners.get(i).handleUpdate();
 				Log.i(TAG, "Sent listener - " + i);
@@ -413,8 +417,11 @@ public abstract class BackgroundService extends Service {
 	 ************************************************************************************************
 	 */
 	protected abstract JSONObject initialiseLatestResult();
+
 	protected abstract JSONObject doWork();
+
 	protected abstract JSONObject getConfig();
+
 	protected abstract void setConfig(JSONObject config);
 
 	protected void onTimerEnabled() {

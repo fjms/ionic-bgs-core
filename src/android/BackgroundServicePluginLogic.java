@@ -12,6 +12,7 @@ import android.app.ActivityManager.RunningServiceInfo;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -604,7 +605,16 @@ public class BackgroundServicePluginLogic {
 				this.mService = new Intent(this.mContext, serviceClass);
 
 				Log.d(LOCALTAG, "Attempting to start service");
-				this.mContext.startService(this.mService);
+				Log.d(LOCALTAG, "Check Version");
+
+				if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+					Log.d(LOCALTAG, "Start Android 8 Service");					
+					this.mContext.startForegroundService(this.mService);
+				} else {
+					Log.d(LOCALTAG, "Start Android 7 Service");					
+					this.mContext.startService(this.mService);
+				}
+				// this.mContext.startService(this.mService);
 
 				Log.d(LOCALTAG, "Attempting to bind to service");
 				if (this.mContext.bindService(this.mService, serviceConnection, 0)) {
